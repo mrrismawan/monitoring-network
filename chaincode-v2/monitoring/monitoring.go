@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/hyperledger/fabric-chaincode-go/shim"
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
@@ -30,8 +32,6 @@ type Aloptama struct {
 	ThnPengadaan int64  `json:"thnpengadaan"`
 	Kondisi      string `json:"kondisi"`
 	Keterangan   string `json:"keterangan"`
-	TxID         string `json:"txId"`
-	CreatedAt    int64  `json:"createdAt"`
 }
 
 // AlatOto declare data Alat Otomatis
@@ -47,8 +47,6 @@ type AlatOto struct {
 	KapSolar    int64   `json:"kapsolar"`
 	CorrMT      string  `json:"corrmt"`
 	PrevMT      string  `json:"prevmt"`
-	TxID        string  `json:"TxID"`
-	CreatedAt   int64   `json:"createdAt"`
 }
 
 //HistoryAloptamaResult structure used for returning result of history query
@@ -97,8 +95,6 @@ func (s *MonitoringContract) CreateAloptama(ctx contractapi.TransactionContextIn
 		ThnPengadaan: tahunpengadaan,
 		Kondisi:      kondisi,
 		Keterangan:   keterangan,
-		TxID:         ctx.GetStub().GetTxID(),
-		CreatedAt:    time.Now().Unix(),
 	}
 
 	aloptamaJSON, err := json.Marshal(aloptama)
@@ -131,8 +127,6 @@ func (s *MonitoringContract) CreateAlatOto(ctx contractapi.TransactionContextInt
 		KapSolar:    kapsolar,
 		CorrMT:      corrmt,
 		PrevMT:      prevmt,
-		TxID:        ctx.GetStub().GetTxID(),
-		CreatedAt:   time.Now().Unix(),
 	}
 
 	alatotoJSON, err := json.Marshal(alatoto)
@@ -183,52 +177,6 @@ func (s *MonitoringContract) ReadAlatOto(ctx contractapi.TransactionContextInter
 	return &alatoto, nil
 }
 
-/*UpdateAloptama update all existing aloptama asset datas in the world state with provided parameters
-func (s *MonitoringContract) UpdateAloptama(ctx contractapi.TransactionContextInterface, kodealat, namaalat, merekalat string, jumlahalat, tahunpengadaan int64, kondisi, keterangan string) (*Aloptama, error) {
-	aloptamaJSON, err := ctx.GetStub().GetState(kodealat)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read from world state. %s", err.Error())
-	}
-	if aloptamaJSON == nil {
-		return nil, fmt.Errorf("the alatoto %s asset does not exist", kodealat)
-	}
-
-	var aloptama Aloptama
-
-	aloptama.TxID = ctx.GetStub().GetTxID()
-	aloptama.CreatedAt = time.Now().Unix()
-
-	err = json.Unmarshal(aloptamaJSON, &aloptama)
-	if err != nil {
-		return nil, err
-	}
-
-	return &aloptama, nil
-}
-
-//UpdateAloptama update all existing aloptama asset datas in the world state with provided parameters
-func (s *MonitoringContract) UpdateAlatOto(ctx contractapi.TransactionContextInterface, kodesite, namasite, jenisalat, lokasisite, mereksensor, mereklogger string, ressensor float64, kapbaterai, kapsolar int64, corrmt, prevmt string) (*AlatOto, error) {
-	alatotoJSON, err := ctx.GetStub().GetState(kodesite)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read from world state. %s", err.Error())
-	}
-	if alatotoJSON == nil {
-		return nil, fmt.Errorf("the alatoto %s asset does not exist", kodesite)
-	}
-
-	var alatoto AlatOto
-
-	alatoto.TxID = ctx.GetStub().GetTxID()
-	alatoto.CreatedAt = time.Now().Unix()
-
-	err = json.Unmarshal(alatotoJSON, &alatoto)
-	if err != nil {
-		return nil, err
-	}
-
-	return &alatoto, nil
-}*/
-
 //--Check Existence in world state--//
 
 //AloptamaExists check Aloptama existence in world state
@@ -260,8 +208,6 @@ func (s *MonitoringContract) UpdateKondisiAloptama(ctx contractapi.TransactionCo
 
 	aloptama.Kondisi = newKondisi
 	aloptama.Keterangan = newKeterangan
-	aloptama.TxID = ctx.GetStub().GetTxID()
-	aloptama.CreatedAt = time.Now().Unix()
 
 	aloptamaJSON, err := json.Marshal(aloptama)
 	if err != nil {
@@ -280,8 +226,6 @@ func (s *MonitoringContract) UpdatePMCM(ctx contractapi.TransactionContextInterf
 
 	alatoto.PrevMT = newPrevMT
 	alatoto.CorrMT = newCorrMT
-	alatoto.TxID = ctx.GetStub().GetTxID()
-	alatoto.CreatedAt = time.Now().Unix()
 
 	alatotoJSON, err := json.Marshal(alatoto)
 	if err != nil {
@@ -319,6 +263,168 @@ func (s *MonitoringContract) DeleteAlatOto(ctx contractapi.TransactionContextInt
 	return ctx.GetStub().DelState(kodesite)
 }
 
+//GetAllAloptama returns all aloptama found in world state
+func (s *MonitoringContract) GetAllAloptama(ctx contractapi.TransactionContextInterface) ([]QueryAloptamaResult, error) {
+	// range query with empty string for startKey and endKey does an open-ended query of all assets in the chaincode namespace.
+	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var results []QueryAloptamaResult
+
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+
+		if err != nil {
+			return nil, err
+		}
+
+		var aloptama Aloptama
+
+		err = json.Unmarshal(queryResponse.Value, &aloptama)
+
+		if err != nil {
+			return nil, err
+		}
+
+		queryaloptamaresult := QueryAloptamaResult{Key: queryResponse.Key, Record: &aloptama}
+		results = append(results, queryaloptamaresult)
+	}
+
+	return results, nil
+}
+
+//GetAllAlatOto returns all alatoto asset in world state
+func (s *MonitoringContract) GetAllAlatOto(ctx contractapi.TransactionContextInterface) ([]QueryAlatOtoResult, error) {
+	// range query with empty string for startKey and endKey does an open-ended query of all assets in the chaincode namespace.
+	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
+
+	if err != nil {
+		return nil, err
+	}
+	defer resultsIterator.Close()
+
+	var results []QueryAlatOtoResult
+
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+
+		if err != nil {
+			return nil, err
+		}
+
+		var alatoto AlatOto
+
+		err = json.Unmarshal(queryResponse.Value, &alatoto)
+
+		if err != nil {
+			return nil, err
+		}
+
+		queryalatotoresult := QueryAlatOtoResult{Key: queryResponse.Key, Record: &alatoto}
+		results = append(results, queryalatotoresult)
+	}
+
+	return results, nil
+}
+
+// GetAloptamaHistory returns the chain of custody for an asset since issuance.
+func (t *MonitoringContract) GetAloptamaHistory(ctx contractapi.TransactionContextInterface, kodealat string) ([]HistoryAloptamaResult, error) {
+	log.Printf("GetAloptamaHistory: Kode Alat %v", kodealat)
+
+	resultsIterator, err := ctx.GetStub().GetHistoryForKey(kodealat)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resultsIterator.Close()
+
+	var aloptamarecords []HistoryAloptamaResult
+	for resultsIterator.HasNext() {
+		response, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var aloptama Aloptama
+		if len(response.Value) > 0 {
+			err = json.Unmarshal(response.Value, &aloptama)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			aloptama = Aloptama{
+				KodeAlat: kodealat,
+			}
+		}
+
+		timestamp, err := ptypes.Timestamp(response.Timestamp)
+		if err != nil {
+			return nil, err
+		}
+
+		record := HistoryAloptamaResult{
+			TxId:      response.TxId,
+			Timestamp: timestamp,
+			Record:    &aloptama,
+			IsDelete:  response.IsDelete,
+		}
+		aloptamarecords = append(aloptamarecords, record)
+	}
+
+	return aloptamarecords, nil
+}
+
+// GetAlatOtoHistory returns the chain of custody for an asset since issuance.
+func (t *MonitoringContract) GetAlatOtoHistory(ctx contractapi.TransactionContextInterface, kodesite string) ([]HistoryAlatOtoResult, error) {
+	log.Printf("GetAlatOtoHistory: Kode Site %v", kodesite)
+
+	resultsIterator, err := ctx.GetStub().GetHistoryForKey(kodesite)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resultsIterator.Close()
+
+	var alatotorecords []HistoryAlatOtoResult
+	for resultsIterator.HasNext() {
+		response, err := resultsIterator.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		var alatoto AlatOto
+		if len(response.Value) > 0 {
+			err = json.Unmarshal(response.Value, &alatoto)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			alatoto = AlatOto{
+				KodeSite: kodesite,
+			}
+		}
+
+		timestamp, err := ptypes.Timestamp(response.Timestamp)
+		if err != nil {
+			return nil, err
+		}
+
+		record := HistoryAlatOtoResult{
+			TxId:      response.TxId,
+			Timestamp: timestamp,
+			Record:    &alatoto,
+			IsDelete:  response.IsDelete,
+		}
+		alatotorecords = append(alatotorecords, record)
+	}
+
+	return alatotorecords, nil
+}
+
 func main() {
 	// See chaincode.env.example
 	config := serverConfig{
@@ -329,7 +435,7 @@ func main() {
 	chaincode, err := contractapi.NewChaincode(new(MonitoringContract))
 
 	if err != nil {
-		fmt.Printf("Error create Aloptama+AlatOto Chaincode: %s", err.Error())
+		log.Panicf("Error create Aloptama+AlatOto Chaincode: %s", err)
 		return
 	}
 
@@ -343,7 +449,7 @@ func main() {
 	}
 
 	if err := server.Start(); err != nil {
-		fmt.Printf("Error starting chaincodes: %s", err.Error())
+		log.Panicf("Error starting chaincodes: %s", err)
 	}
 
 }
