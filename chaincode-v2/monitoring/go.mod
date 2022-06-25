@@ -1,6 +1,6 @@
 module github.com/fabcar_contract_api/go
 
-go 1.17
+go 1.18
 
 require (
 	github.com/hyperledger/fabric-chaincode-go v0.0.0-20200424173110-d7076418f212
