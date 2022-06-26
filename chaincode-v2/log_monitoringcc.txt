@@ -65,7 +65,7 @@ ReadAlatOto // Menampilkan Alat Otomatis
 AloptamaExists // Function check untuk data aloptama di ledger
 AlatOtoExists // Function check untuk data alat otomatis di ledger
 UpdateKondisiAloptama // Mengupdate Field Kondisi dan Keterangan. Field lain Disabled
-UpdateKondisiAlatOto // Mengupdate Field PrevMT dan CorrMT. Field lain Disabled
+UpdatePMCM // Mengupdate Field PrevMT dan CorrMT. Field lain Disabled
 GetAllAloptama // Menampilkan seluruh data aloptama di ledger
 GetAllAlatOto // Menampilkan seluruh data alat otomatis di ledger
 GetAloptamaHistory // Menampilkan history aloptama berdasarkan kode alat
@@ -75,5 +75,21 @@ GetAlatOtoHistory // Menampilkan history alat otomatis berdasarkan kode Site
 DeleteAloptama // Menghapus aloptama dari seluruh world state peer via function
 DeleteAlatOto // Menghapus alat otomatis dari seluruh world state peer via function
 
-[10] Recent Problems
+[10] Functional Testing 1 via CLI @ 27 June 2022
+a) CreateAloptama working
+b) CreateAlatOto working //Kode site tidak boleh == kode alat
+c) ReadAloptama working
+d) ReadAlatOto working
+e) AloptamaExists working
+f) AlatOtoExists working
+g) UpdateKondisiAloptama working
+h) UpdatePMCM working
+i) GetAllAloptama working, tapi ada bug sekali data alatoto masuk ke aloptama
+j) GetAllAlatOto working
+k) GetAloptamaHistory working
+l) GetAlatOtoHistory working
+m) DeleteAloptama working, data di world state saat GetAllAloptama tidak muncul, masih bisa dipanggil lewat history kodealat
+n) DeleteAlatOto working, data di world state saat GetAllAlatOto tidak muncul, masih bisa dipanggil lewat history kodesite
+
+[11] Recent Problems
 a) CouchDB Project Fauxton interface bisa dilakukan port forward, response curl berhasil. Tetapi tidak bisa diexpose keluar internet
