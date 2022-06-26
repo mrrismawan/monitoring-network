@@ -1,0 +1,79 @@
+-- Chaincode Packaging, Installation, and Container Image setup --
+-- Current vesion: 2.2 --
+-- Current sequence: 3 --
+
+[1] Packaging Chaincode
+export CHAINCODE_NAME=monitoring
+export CHAINCODE_LABEL=monitoring
+
+cat << METADATA-EOF > "metadata.json"
+{
+    "type": "ccaas",
+    "label": "${CHAINCODE_LABEL}"
+}
+METADATA-EOF
+
+cat > "connection.json" <<CONN_EOF
+{
+  "address": "${CHAINCODE_NAME}:7052",
+  "dial_timeout": "10s",
+  "tls_required": false
+}
+CONN_EOF
+
+export PACKAGE_ID=$(kubectl hlf chaincode calculatepackageid --path=./monitoring-external.tgz --config=networkConfig.yaml --language=golang --label=$CHAINCODE_LABEL)
+
+--PACKAGE_ID Response--
+monitoring:7f81a500c3d42a33595f902d9a547fcc0b559395a3faee96bbfbe6f6f332f89b     monitoring      {"mychannel":[{"name":"monitoring","version":"2.2"}]}
+
+[2] Install Chaincode to each Peers
+kubectl hlf chaincode install --path=./monitoring-external.tgz --config=networkConfig.yaml --language=golang --label=$CHAINCODE_LABEL --user=admin --peer=org1-peer1.fabric
+-- Response
+INFO[0000] Package id=monitoring:7f81a500c3d42a33595f902d9a547fcc0b559395a3faee96bbfbe6f6f332f89b Status=200
+INFO[0000] Chaincode installed monitoring:7f81a500c3d42a33595f902d9a547fcc0b559395a3faee96bbfbe6f6f332f89b
+
+[3] Build Docker Images then push to Docker Hub
+docker build -t mrrismawan/aloptama-cc-go:2.2 .
+docker login //fill with docker hub account credentials
+docker push mrrismawan/aloptama-cc-go:2.2
+
+--Docker Hub Image Repo
+https://hub.docker.com/repository/docker/mrrismawan/aloptama-cc-go
+
+
+[4] nstall/Upgrade Chaincode Container
+kubectl hlf externalchaincode sync --image=mrrismawan/aloptama-cc-go:2.2 --name=$CHAINCODE_NAME --namespace=fabric --package-id=$PACKAGE_ID --tls-required=false --replicas=1 
+
+[5] Approve Chaincode to Organization
+kubectl hlf chaincode approveformyorg --config=networkConfig.yaml --user=admin --peer=org1-peer1.fabric --package-id=$PACKAGE_ID --version=2.2 --sequence 1 --name=$CHAINCODE_NAME --policy="OR('Org1MSP.member','Org2MSP.member','Org3MSP.member')" --channel=mychannel
+
+[6] Commit Chaincode to Org1MSP Org2MSP Org3MSP
+kubectl hlf chaincode commit --config=networkConfig.yaml --user=admin --mspid=Org1MSP --version=2.2 --sequence=3 --name=$CHAINCODE_NAME --policy="OR('Org1MSP.member','Org2MSP.member','Org3MSP.member')" --channel=mychannel
+
+[6] Invoke Transaction to Ledger
+kubectl hlf chaincode invoke --config=networkConfig.yaml --user=admin --peer=org2-peer1.fabric --chaincode=monitoring --channel=mychannel --fcn=InitLedger -a '[]'
+
+[7] If the chaincode codes are not showing error, TxID response should be appear. Data commited to ledger
+INFO[0002] txid=e7e47cfcab2cd1e99662b7cf5a59d57fa338f57bf5bc2088d9d30e9099d41b82
+
+[8] Test all the chaincodes query function
+InitLedger // Invoke only once at chaincode installation
+CreateAloptama // Memasukkan data alat aloptama baru
+CreateAlatOto // Memasukkan data alat otomatis ARG/AWS
+ReadAloptama // Menampilkan aloptama
+ReadAlatOto // Menampilkan Alat Otomatis
+AloptamaExists // Function check untuk data aloptama di ledger
+AlatOtoExists // Function check untuk data alat otomatis di ledger
+UpdateKondisiAloptama // Mengupdate Field Kondisi dan Keterangan. Field lain Disabled
+UpdateKondisiAlatOto // Mengupdate Field PrevMT dan CorrMT. Field lain Disabled
+GetAllAloptama // Menampilkan seluruh data aloptama di ledger
+GetAllAlatOto // Menampilkan seluruh data alat otomatis di ledger
+GetAloptamaHistory // Menampilkan history aloptama berdasarkan kode alat
+GetAlatOtoHistory // Menampilkan history alat otomatis berdasarkan kode Site
+
+[9] Hidden query to be approved
+DeleteAloptama // Menghapus aloptama dari seluruh world state peer via function
+DeleteAlatOto // Menghapus alat otomatis dari seluruh world state peer via function
+
+[10] Recent Problems
+a) CouchDB Project Fauxton interface bisa dilakukan port forward, response curl berhasil. Tetapi tidak bisa diexpose keluar internet
