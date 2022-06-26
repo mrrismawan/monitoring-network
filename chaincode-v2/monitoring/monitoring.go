@@ -1,3 +1,7 @@
+/*
+SPDX-License-Identifier: Apache-2.0
+*/
+
 package main
 
 import (
@@ -77,13 +81,35 @@ type QueryAlatOtoResult struct {
 	Record *AlatOto
 }
 
+// InitLedger adds a base set of testing asset to Aloptama
+func (s *MonitoringContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
+	assets := []Aloptama{
+		{KodeAlat: "230026062022", NamaAlat: "PC testing", MerekAlat: "Acer", JumlahAlat: 1, ThnPengadaan: 2018, Kondisi: "Baik", Keterangan: "OK"},
+	}
+
+	for _, aloptama := range assets {
+		aloptamaJSON, err := json.Marshal(aloptama)
+		if err != nil {
+			return err
+		}
+
+		err = ctx.GetStub().PutState(aloptama.KodeAlat, aloptamaJSON)
+		if err != nil {
+			return fmt.Errorf("failed to put to world state: %v", err)
+
+		}
+	}
+
+	return nil
+}
+
 // Create Aloptama Asset to world state
 func (s *MonitoringContract) CreateAloptama(ctx contractapi.TransactionContextInterface, kodealat, namaalat, merekalat string, jumlahalat, tahunpengadaan int64, kondisi, keterangan string) error {
 	exists, err := s.AloptamaExists(ctx, kodealat)
 	if err != nil {
 		return err
 	}
-	if !exists {
+	if exists {
 		return fmt.Errorf("aloptama asset %s already exist", kodealat)
 	}
 
@@ -111,7 +137,7 @@ func (s *MonitoringContract) CreateAlatOto(ctx contractapi.TransactionContextInt
 	if err != nil {
 		return err
 	}
-	if !exists {
+	if exists {
 		return fmt.Errorf("alat otomatis asset %s already exist", kodesite)
 	}
 
