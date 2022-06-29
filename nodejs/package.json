@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "fabric-ca-client": "^2.2.13",
+    "fabric-network": "^2.2.13",
+    "js-yaml": "^4.1.0"
+  }
+}
