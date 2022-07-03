@@ -1,0 +1,8 @@
+[1] Build nodejs async function ke blockchain.
+[2] Function berada di dir app
+
+[3] Auth0 authentication middleware config di dir middleware. Atau ikut dokumetasi juga OK
+
+[4] Setup Swagger UI dependencies dan codingan
+
+target abis ujian AWS SAA-S02 all done and tested. Ikuzo
