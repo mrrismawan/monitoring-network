@@ -5,9 +5,10 @@ const yaml = require("js-yaml");
 const fs = require("fs");
 const path = require("path");
 const mspId = "Org2MSP";
-const CC_NAME = "fabcar";
+const CC_NAME = "monitoring";
 const CHANNEL = "mychannel";
 let ccp = null;
+
 async function invoke(user) {
     try {
         console.log("Invoking chaincode using : ", user);
