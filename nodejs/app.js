@@ -9,6 +9,11 @@ const bodyparser = require("body-parser");
 var cors = require('cors');
 const {registerUser, userExist} = require("./app/registerUser");
 const {createAloptama, createAlatoto, updateKondisiAloptama, updatePMCM} = require("./app/invoke");
+
+const chaincodeName = "monitoring";
+const channelName = "mychannel";
+
+var cors = require('cors')
 app.use(cors())
 app.use(bodyparser.json());
 
@@ -22,6 +27,7 @@ app.post("/register", async (req,res) => {
         let userId = req.body.userId;
         let result = await registerUser({ OrgMSP: org, userId: userId });
         res.send(result);
+        
     } catch (error) {
         res.status(500).send(error)
     }
@@ -31,7 +37,9 @@ app.post("/register", async (req,res) => {
 app.post("/createAloptama", async (req,res) => {
     try {
         let payload = {
-            "channelName": req.body.channelName,
+            "org": req.body.org,
+            "channelName": channelName,
+            "chaincodeName": chaincodeName,
             "userId": req.body.userId,
             "data": req.body.data
         }
