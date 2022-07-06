@@ -7,6 +7,7 @@ app.use(morgan('combined'))
 const bodyparser = require("body-parser");
 
 var cors = require('cors');
+const {registerUser, userExist} = require("./app/registerUser");
 const {createAloptama, createAlatoto, updateKondisiAloptama, updatePMCM} = require("./app/invoke");
 app.use(cors())
 app.use(bodyparser.json());
@@ -14,6 +15,18 @@ app.use(bodyparser.json());
 app.listen(4000, () => {
     console.log("Server running on port 4000");
 })
+
+app.post("/register", async (req,res) => {
+    try {
+        let org = req.body.org;
+        let userId = req.body.userId;
+        let result = await registerUser({ OrgMSP: org, userId: userId });
+        res.send(result);
+    } catch (error) {
+        res.status(500).send(error)
+    }
+
+});
 
 app.post("/createAloptama", async (req,res) => {
     try {
