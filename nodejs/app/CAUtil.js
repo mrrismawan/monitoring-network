@@ -20,7 +20,7 @@ exports.buildCAClient = (FabricCAServices, ccp, caHostName) => {
 	return caClient;
 };
 
-exports.enrollAdmin = async (caClient, wallet, orgMSPId) => {
+exports.enrollAdmin = async (caClient, wallet, orgMspId) => {
     try {
         // Check to see if we've already enrolled the admin user.
 		const identity = await wallet.get(adminUserId);

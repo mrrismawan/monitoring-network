@@ -5,7 +5,7 @@ const path = require('path');
 const yaml = require('js-yaml');
 
 exports.buildCCPOrg1 = () => {
-    const ccpPath = path.resolve(__dirname,  "connection-org.yaml");
+    const ccpPath = path.resolve(__dirname, "connection-org.yaml");
         if (ccpPath.includes(".yaml")) {
             ccp = yaml.load(fs.readFileSync(ccpPath, "utf8"));
         } else {
@@ -26,7 +26,7 @@ exports.buildCCPOrg1 = () => {
 };
 
 exports.buildCCPOrg2 = () => {
-    const ccpPath = path.resolve(__dirname,  "connection-org.yaml");
+    const ccpPath = path.resolve(__dirname, "connection-org.yaml");
         if (ccpPath.includes(".yaml")) {
             ccp = yaml.load(fs.readFileSync(ccpPath, "utf8"));
         } else {
@@ -47,7 +47,7 @@ exports.buildCCPOrg2 = () => {
 };
 
 exports.buildCCPOrg3 = () => {
-    const ccpPath = path.resolve(__dirname,  "connection-org.yaml");
+    const ccpPath = path.resolve(__dirname, "connection-org.yaml");
         if (ccpPath.includes(".yaml")) {
             ccp = yaml.load(fs.readFileSync(ccpPath, "utf8"));
         } else {
